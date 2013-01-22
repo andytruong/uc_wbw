@@ -226,7 +226,7 @@ function uc_who_bought_what_report($node) {
     $csv_rows[] = $temp_csv;
 
     while ($customer = db_fetch_array($customers)) {
-      uc_who_bought_what_report__row($customer, $email_addresses, $rows, $csv_rows, $csv_xtra, $duplicate_value);
+      uc_who_bought_what_report__row($node->nid, $customer, $email_addresses, $rows, $csv_rows, $csv_xtra, $duplicate_value);
     }
 
     if (empty($rows)) {
@@ -270,7 +270,7 @@ function convert_to_filename($string) {
   return $string;
 }
 
-function uc_who_bought_what_report__row($customer, &$email_addresses, &$rows, &$csv_rows, $csv_xtra, $duplicate_value) {
+function uc_who_bought_what_report__row($nid, $customer, &$email_addresses, &$rows, &$csv_rows, $csv_xtra, $duplicate_value) {
   $temparray = array();
   $temparray[] = $customer['qty'];
   $temparray[] = l(check_plain(user_load($customer['uid'])->name), 'user/' . $customer['uid']); // added by L0rne
@@ -285,21 +285,32 @@ function uc_who_bought_what_report__row($customer, &$email_addresses, &$rows, &$
   $temparray[] = check_plain($customer['billing_postal_code']);
   $temparray[] = check_plain($customer['bill_country']);
   $temparray[] = number_format($customer['price'], 2);
+
   // Display discounted price
   $order = uc_order_load($customer['order_id']);
+  foreach ($order->products as $i => $product) {
+    if ($nid != $product->nid) {
+      unset($order->products[$i]);
+    }
+  }
 
   $paid = $customer['price'];
-  foreach ($order->line_items as $line_item) {
-    if ($line_item['type'] == 'coupon') {
-      $coupon_code = explode("Coupon: ", $line_item['title']);
-      $coupon = l(number_format($line_item['amount'], 2), 'admin/store/coupons/' . uc_coupon_find($coupon_code[1])->cid);
-      $paid += $line_item['amount'];
-    }
-    elseif ($line_item['type'] == 'uc_discounts') {
-      $discount = l(number_format($line_item['amount'], 2), 'admin/reports/uc_discounts/discount/' . $line_item['data']['discount_id']);
+
+  if (!empty($order->data) && isset($order->data['coupon'])) {
+    if ($coupon = uc_coupon_validate($order->data['coupon'], $order->order_id)) {
+      $coupon = $coupon->value;
       $paid += $line_item['amount'];
     }
   }
+
+  if ($discounts = get_discounts_for_order($order, $errors, $messages)) {
+    $dis = 0;
+    foreach ($discounts as $discount) {
+      $dis += $discount->amount;
+    }
+    $discount = number_format($dis, 2);
+  }
+
   $temparray[] = $coupon;
   $temparray[] = $discount;
   $temparray[] = number_format($paid);
