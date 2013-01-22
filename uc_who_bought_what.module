@@ -1,0 +1,69 @@
+<?php
+
+// $Id:
+
+/**
+ * @uc_who_bought_what.module (dev 2/5/11)
+ *
+ * Displays a list of customers who have purchased a particular product in Übercart.
+ *
+ * Adds an additional menu item to the Ubercart Reports, that lists the customers
+ * who purchased certain products.  And totals, and show all records
+ * now fixed permissions and table prefixes correctly using curly braces at all seven locations
+ * also fixed title exposure problem and added check_plain.
+ *
+ * Copyright 2011 Michael Moradzadeh Cayenne.SF@gmail.com
+ * Based on code from Ubercart project.
+ * Released under GPL.
+ */
+/* * *****************************************************************************
+ * Module and Helper Functions
+ * **************************************************************************** */
+
+/**
+ * Valid permissions for this module
+ * @return array An array of valid permissions for the uc_who_bought_what module
+ */
+function uc_who_bought_what_perm() {
+  return array('view uc_who_bought_what', 'view all who bought what');
+}
+
+// function uc_who_bought_what_perm
+
+/**
+ * Implements hook_menu().
+ *
+ * @return array
+ */
+function uc_who_bought_what_menu() {
+  $items['admin/store/reports/uc_who_bought_what'] = array(
+    'title' => 'Who Bought What',
+    'description' => 'View reports of users who purchased specific products',
+    'file' => 'uc_who_bought_what.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('uc_who_bought_what_form'),
+    'access arguments' => array('view uc_who_bought_what'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/store/reports/uc_who_bought_what/%node'] = $items['admin/store/reports/uc_who_bought_what'];
+  $items['admin/store/reports/uc_who_bought_what/%node']['page arguments'][] = 4;
+
+  return $items;
+}
+
+/**
+ * Display help and module information
+ * @param path which path of the site we're displaying help
+ * @param arg array that holds the current path as would be returned from arg() function
+ * @return help text for the path
+ */
+function uc_who_bought_what_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case "admin/help#uc_who_bought_what":
+      $output = '<p>' . t("Displays list of users who purchased a product") . '</p>';
+      break;
+  }
+  return $output;
+} // function uc_who_bought_what_help
