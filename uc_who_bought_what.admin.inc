@@ -299,7 +299,7 @@ function uc_who_bought_what_report__row($nid, $customer, &$email_addresses, &$ro
   if (!empty($order->data) && isset($order->data['coupon'])) {
     if ($coupon = uc_coupon_validate($order->data['coupon'], $order->order_id)) {
       $coupon = $coupon->value;
-      $paid += $line_item['amount'];
+      $paid -= $coupon;
     }
   }
 
@@ -309,11 +309,12 @@ function uc_who_bought_what_report__row($nid, $customer, &$email_addresses, &$ro
       $dis += $discount->amount;
     }
     $discount = number_format($dis, 2);
+    $paid -= $discount;
   }
 
   $temparray[] = $coupon;
   $temparray[] = $discount;
-  $temparray[] = number_format($paid);
+  $temparray[] = number_format($paid, 2);
   $temparray[] = number_format($customer['total'], 2);
   $temparray[] = strftime('%Y.%m.%d', $customer['date']);
   $temparray[] = $customer['howpay'];
